@@ -46,13 +46,13 @@ defaults:
     shell: pwsh
 
 env:
-  RDP_USER: MiTrixs
-  RDP_PASS: MiTrixs@333
-  TS_HOSTNAME: mitrixs
+  RDP_USER: Bullettemporary
+  RDP_PASS: Bullet@12345
+  TS_HOSTNAME: bullet
 
 jobs:
   rdp:
-    runs-on: windows-2025
+    runs-on: windows-2022
     timeout-minutes: 370
     steps:
       - name: 🔧 Resolve inputs (safe)
