@@ -47,7 +47,7 @@ defaults:
 
 env:
   RDP_USER: mitrixs
-  RDP_PASS: MiTrixs@1317
+  RDP_PASS: MTrixs@12345
   TS_HOSTNAME: MiTrixs
 
 jobs:
