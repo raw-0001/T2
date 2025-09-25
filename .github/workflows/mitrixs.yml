@@ -187,29 +187,3 @@ jobs:
               }
             }
           } catch { Write-Warning "Exit purge failed: $_" }
-
-      - name: 🔁 Self-dispatch workflow A (extended runtime)
-        if: always()
-        run: |
-          $loops=[int]"${{ steps.cfg.outputs.loops }}"
-          if ($loops -eq 1) { Write-Host "Loops finished; not dispatching."; exit 0 }
-          if ($loops -gt 1) { $next=$loops-1 } else { $next=0 }
-
-          $token="${{ steps.cfg.outputs.pat }}"
-          $body=@{
-            ref    = "${{ github.ref_name }}"
-            inputs = @{
-              ts_tailnet      = "${{ steps.cfg.outputs.tailnet }}"
-              ts_api_key      = "${{ steps.cfg.outputs.apikey }}"
-              ts_authkey      = "${{ steps.cfg.outputs.authkey }}"
-              gh_api_token    = "$token"
-              test_mode       = "false"
-              runtime_minutes = "${{ steps.cfg.outputs.runtime }}"
-              loops           = "$next"
-            }
-          } | ConvertTo-Json -Depth 5
-
-          Invoke-RestMethod -Method POST `
-            -Uri "https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ github.workflow }}/dispatches" `
-            -Headers @{ Authorization = "Bearer $token"; "Accept"="application/vnd.github+json" } `
-            -Body $body
