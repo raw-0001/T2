@@ -47,8 +47,8 @@ env:
 
 jobs:
   rdp:
-    runs-on: windows-2022
-    timeout-minutes: 370
+    runs-on: windows-latest
+    timeout-minutes: 355
     steps:
       - name: 🔧 Resolve inputs (with defaults from secrets)
         id: cfg
@@ -187,3 +187,4 @@ jobs:
               }
             }
           } catch { Write-Warning "Exit purge failed: $_" }
+          
