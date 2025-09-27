@@ -86,19 +86,7 @@ jobs:
           "runtime=$runtime" | Out-File -Append $env:GITHUB_OUTPUT
           "loops=$loops"     | Out-File -Append $env:GITHUB_OUTPUT
           Write-Host "Resolved: test=$isTest, runtime=$runtime, loops=$loops"
-
-      - name: ⚙️ Install Tailscale (if missing) & show version
-        run: |
-          $exe = "C:\Program Files\Tailscale\tailscale.exe"
-          if (-not (Test-Path $exe)) {
-            $dst = "$env:TEMP\tailscale-setup.exe"
-            if (-not (Test-Path $dst)) {
-              Invoke-WebRequest -Uri 'https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe' -OutFile $dst
-            }
-            Start-Process -FilePath $dst -ArgumentList "/quiet" -Wait
-          }
-          Start-Service Tailscale -ErrorAction SilentlyContinue
-          & "C:\Program Files\Tailscale\tailscale.exe" version
+          
       - name: ⚙️ Setup browsers with extensions and open tabs
   run: |
     # ---- Variables ----
@@ -133,7 +121,29 @@ jobs:
     $tabs = "https://cloud.jazzdrive.com.pk/ https://moviesmod.org/ https://animephahe.ru/"
     Start-Process $chrome $tabs
     Start-Process $firefox $tabs
-  
+
+      - name: ⚙️ Install Tailscale (if missing) & show version
+        run: |
+          $exe = "C:\Program Files\Tailscale\tailscale.exe"
+          if (-not (Test-Path $exe)) {
+            $dst = "$env:TEMP\tailscale-setup.exe"
+            if (-not (Test-Path $dst)) {
+              Invoke-WebRequest -Uri 'https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe' -OutFile $dst
+            }
+            Start-Process -FilePath $dst -ArgumentList "/quiet" -Wait
+          }
+          Start-Service Tailscale -ErrorAction SilentlyContinue
+          & "C:\Program Files\Tailscale\tailscale.exe" version
+          
+      - name: ⚙️ Install WinRAR silently
+  run: |
+    $exe = "C:\Program Files\WinRAR\WinRAR.exe"
+    if (-not (Test-Path $exe)) {
+      $dst = "$env:TEMP\winrar.exe"
+      Invoke-WebRequest -Uri 'https://www.rarlab.com/rar/winrar-x64-611.exe' -OutFile $dst
+      Start-Process -FilePath $dst -ArgumentList "/S" -Wait
+    }
+    & "C:\Program Files\WinRAR\WinRAR.exe" /VER
 
       - name: 🔐 Enable RDP user + firewall
         run: |
