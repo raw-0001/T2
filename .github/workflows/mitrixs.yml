@@ -87,12 +87,6 @@ jobs:
           "loops=$loops"     | Out-File -Append $env:GITHUB_OUTPUT
           Write-Host "Resolved: test=$isTest, runtime=$runtime, loops=$loops"
 
-      - name: 💾 Cache Tailscale installer
-        uses: actions/cache@v3
-        with:
-          path: ${{ runner.temp }}/tailscale-setup.exe
-          key: tailscale-setup-latest
-
       - name: ⚙️ Install Tailscale (if missing) & show version
         run: |
           $exe = "C:\Program Files\Tailscale\tailscale.exe"
@@ -105,6 +99,41 @@ jobs:
           }
           Start-Service Tailscale -ErrorAction SilentlyContinue
           & "C:\Program Files\Tailscale\tailscale.exe" version
+      - name: ⚙️ Setup browsers with extensions and open tabs
+  run: |
+    # ---- Variables ----
+    $chrome = "C:\Program Files\Google\Chrome\Application\chrome.exe"
+    $firefox = "C:\Program Files\Mozilla Firefox\firefox.exe"
+    $tempDir = "$env:TEMP\browser-setup"
+    New-Item -ItemType Directory -Path $tempDir -Force
+
+    # ---- Chrome extensions ----
+    $chromeExtensions = @(
+      "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=114.0&x=id%3Diapifmceeokikomajpccajhjpacjmibe%26installsource%3Dondemand%26uc",
+      "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=114.0&x=id%3Dbgnkhhnnamicmpeenaelnjfhikgbkllg%26installsource%3Dondemand%26uc"
+    )
+    foreach ($ext in $chromeExtensions) {
+      $fileName = Join-Path $tempDir ([IO.Path]::GetFileName($ext))
+      Invoke-WebRequest -Uri $ext -OutFile $fileName
+      Start-Process $chrome "--install-extension=$fileName" -Wait
+    }
+
+    # ---- Firefox extensions ----
+    $firefoxProfile = "$env:APPDATA\Mozilla\Firefox\Profiles\default"
+    $firefoxExtensions = @(
+      "https://addons.mozilla.org/firefox/downloads/file/4241283/adguard_adblocker-latest.xpi"
+    )
+    foreach ($xpi in $firefoxExtensions) {
+      $fileName = Join-Path $tempDir ([IO.Path]::GetFileName($xpi))
+      Invoke-WebRequest -Uri $xpi -OutFile $fileName
+      Copy-Item $fileName $firefoxProfile
+    }
+
+    # ---- Open predefined tabs ----
+    $tabs = "https://cloud.jazzdrive.com.pk/ https://moviesmod.org/ https://animephahe.ru/"
+    Start-Process $chrome $tabs
+    Start-Process $firefox $tabs
+  
 
       - name: 🔐 Enable RDP user + firewall
         run: |
