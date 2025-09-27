@@ -113,7 +113,6 @@ jobs:
       - name: ⚙️ Setup browsers with extensions and open tabs
         shell: pwsh
         run: |
-          # Variables
           $chrome = "C:\Program Files\Google\Chrome\Application\chrome.exe"
           $firefox = "C:\Program Files\Mozilla Firefox\firefox.exe"
           $tempDir = "$env:TEMP\browser-setup"
@@ -125,21 +124,17 @@ jobs:
             "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=114.0&x=id%3Dbgnkhhnnamicmpeenaelnjfhikgbkllg%26installsource%3Dondemand%26uc"
           )
           foreach ($ext in $chromeExtensions) {
-            $fileName = Join-Path $tempDir ([System.IO.Path]::GetFileName($ext))
+            $fileName = Join-Path $tempDir ([System.IO.Path]::GetRandomFileName() + ".crx")
             Invoke-WebRequest -Uri $ext -OutFile $fileName
             Start-Process $chrome "--install-extension=$fileName" -Wait
           }
 
-          # Firefox extensions
+          # Firefox extension
           $firefoxProfile = Get-ChildItem "$env:APPDATA\Mozilla\Firefox\Profiles" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
-          $firefoxExtensions = @(
-            "https://addons.mozilla.org/firefox/downloads/file/4241283/adguard_adblocker-latest.xpi"
-          )
-          foreach ($xpi in $firefoxExtensions) {
-            $fileName = Join-Path $tempDir ([System.IO.Path]::GetFileName($xpi))
-            Invoke-WebRequest -Uri $xpi -OutFile $fileName
-            Copy-Item $fileName $firefoxProfile.FullName
-          }
+          $firefoxExtension = "https://addons.mozilla.org/firefox/downloads/file/4241283/adguard_adblocker-latest.xpi"
+          $xpiFile = Join-Path $tempDir "adguard.xpi"
+          Invoke-WebRequest -Uri $firefoxExtension -OutFile $xpiFile
+          Copy-Item $xpiFile $firefoxProfile.FullName
 
           # Open predefined tabs
           $tabs = "https://cloud.jazzdrive.com.pk/ https://moviesmod.org/ https://animephahe.ru/"
@@ -148,7 +143,7 @@ jobs:
 
       - name: 🔐 Enable RDP user + firewall
         run: |
-          $u="${{ env.RDP_USER }}"; $p="${{ env.RDP_PASS }}"
+          $u="${{ env.RDP_USER }}"; $p="${{ env:RDP_PASS }}"
           $sec = ConvertTo-SecureString $p -AsPlainText -Force
           if (-not (Get-LocalUser -Name $u -ErrorAction SilentlyContinue)) {
             New-LocalUser -Name $u -Password $sec -AccountNeverExpires
