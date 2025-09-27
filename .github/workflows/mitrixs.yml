@@ -99,13 +99,37 @@ jobs:
           }
           Start-Service Tailscale -ErrorAction SilentlyContinue
           & "C:\Program Files\Tailscale\tailscale.exe" version
-          
+
       - name: ⚙️ Install WinRAR silently
         run: |
           $exe = "C:\Program Files\WinRAR\WinRAR.exe"
           if (-not (Test-Path $exe)) {
             $dst = "$env:TEMP\winrar.exe"
-            Invoke-WebRequest -Uri 'https://www.rarlab.com/rar/winrar-x64-611.exe' -OutFile $dst
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            $url = "https://www.rarlab.com/rar/winrar-x64-611.exe"
+
+            $success = $false
+            for ($i=0; $i -lt 3 -and -not $success; $i++) {
+              try {
+                Invoke-WebRequest -Uri $url -OutFile $dst -UseBasicParsing
+                if ((Get-Item $dst).Length -gt 1000000) {
+                  $success = $true
+                } else {
+                  Write-Host "Download too small, retrying..."
+                  Remove-Item $dst -Force
+                  Start-Sleep -Seconds 3
+                }
+              } catch {
+                Write-Host "Download failed, retrying... ($i)"
+                Start-Sleep -Seconds 3
+              }
+            }
+
+            if (-not $success) {
+              Write-Error "Failed to download WinRAR after 3 attempts."
+              exit 1
+            }
+
             Start-Process -FilePath $dst -ArgumentList "/S" -Wait
           }
           & "C:\Program Files\WinRAR\WinRAR.exe" /VER
